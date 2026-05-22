@@ -28,7 +28,6 @@ export class Fighter {
     this.isAttacking = false;
     this.attackCooldown = 0;
     this.hitstun = 0;
-    this.hasHit = false;
 
     this.attackData = {
       startup: 10,
@@ -39,6 +38,9 @@ export class Fighter {
     };
   }
 
+  // =========================
+  // ATTACK
+  // =========================
   attack() {
     if (this.isKO) return;
     if (this.attackCooldown > 0 || this.hitstun > 0) return;
@@ -46,9 +48,11 @@ export class Fighter {
 
     this.attackState = "startup";
     this.attackTimer = this.attackData.startup;
-    this.hasHit = false;
   }
 
+  // =========================
+  // BLOCK
+  // =========================
   isBlocking(opponent) {
     if (this.isKO) return false;
 
@@ -58,10 +62,12 @@ export class Fighter {
     return false;
   }
 
+  // =========================
+  // HIT SYSTEM
+  // =========================
   takeHit(damage, direction, attacker) {
     if (this.isKO) return;
 
-    // 🛡 BLOCK
     if (this.isBlocking(attacker)) {
       this.health -= damage * 0.2;
       this.x += direction * 2;
@@ -69,12 +75,10 @@ export class Fighter {
       return;
     }
 
-    // 💥 HIT
     this.health -= damage;
     this.x += direction * 25;
     this.hitstun = 12;
 
-    // KO CHECK
     if (this.health <= 0) {
       this.health = 0;
       this.isKO = true;
@@ -83,6 +87,9 @@ export class Fighter {
     }
   }
 
+  // =========================
+  // UPDATE
+  // =========================
   update(canvas) {
     if (this.isKO) return;
 
@@ -137,11 +144,36 @@ export class Fighter {
     }
   }
 
+  // =========================
+  // DRAW (CHARACTER DESIGN)
+  // =========================
   draw(ctx) {
+    // BODY
     ctx.fillStyle = this.color;
     ctx.fillRect(this.x, this.y, this.width, this.height);
 
-    // health bar
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(this.x, this.y, this.width, this.height);
+
+    // FACE
+    const eyeY = this.y + 25;
+    const eyeX1 = this.x + 12;
+    const eyeX2 = this.x + this.width - 18;
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(eyeX1, eyeY, 6, 6);
+    ctx.fillRect(eyeX2, eyeY, 6, 6);
+
+    ctx.fillStyle = "black";
+    ctx.fillRect(eyeX1 + 2, eyeY + 2, 2, 2);
+    ctx.fillRect(eyeX2 + 2, eyeY + 2, 2, 2);
+
+    // mouth (changes when attacking)
+    ctx.fillStyle = this.attackState === "active" ? "red" : "black";
+    ctx.fillRect(this.x + 18, this.y + 50, 14, 3);
+
+    // HEALTH BAR
     ctx.fillStyle = "red";
     ctx.fillRect(
       this.x,
@@ -150,12 +182,14 @@ export class Fighter {
       5
     );
 
+    // STATE TEXT
     ctx.fillStyle = "white";
     ctx.font = "12px Arial";
     ctx.fillText(this.attackState, this.x, this.y - 20);
 
+    // KO TEXT
     if (this.isKO) {
-      ctx.fillText("KO", this.x, this.y - 35);
+      ctx.fillText("KO", this.x + 10, this.y - 35);
     }
   }
 }
