@@ -8,7 +8,7 @@ const ctx = canvas.getContext("2d");
 canvas.width = 1000;
 canvas.height = 600;
 
-// create fighters (SEPARATE CONTROLS)
+// fighters
 const player1 = new Fighter(100, 300, "red", {
   left: "a",
   right: "d",
@@ -23,16 +23,38 @@ const player2 = new Fighter(700, 300, "blue", {
 
 initInput();
 
+function checkHit(attacker, defender) {
+  if (!attacker.isAttacking) return;
+
+  const range = 60;
+
+  const inXRange = Math.abs(attacker.x - defender.x) < range;
+  const inYRange = Math.abs(attacker.y - defender.y) < 50;
+
+  if (inXRange && inYRange) {
+    const direction = attacker.x < defender.x ? 1 : -1;
+    defender.takeHit(10, direction);
+  }
+}
+
 function gameLoop() {
+  // 🥊 attacks
+  if (keys["j"]) player1.attack();
+  if (keys["Enter"]) player2.attack();
+
+  // 🧠 hit detection
+  checkHit(player1, player2);
+  checkHit(player2, player1);
+
   // update
   player1.update(canvas);
   player2.update(canvas);
 
-  // draw background
+  // background
   ctx.fillStyle = "#111";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // draw fighters
+  // draw
   player1.draw(ctx);
   player2.draw(ctx);
 
