@@ -18,56 +18,90 @@ export class Fighter {
     this.gravity = 0.7;
     this.isGrounded = false;
 
-    // 🥊 combat
+    // 🥊 ATTACK SYSTEM (NEW)
+    this.attackState = "idle"; // idle | startup | active | recovery
+    this.attackTimer = 0;
+    this.hasHit = false;
+
     this.isAttacking = false;
     this.attackCooldown = 0;
     this.hitstun = 0;
+
+    // ⚙️ FRAME DATA (you can tweak later)
+    this.attackData = {
+      startup: 10,
+      active: 6,
+      recovery: 14,
+      damage: 10,
+      range: 60
+    };
   }
 
   attack() {
     if (this.attackCooldown > 0 || this.hitstun > 0) return;
+    if (this.attackState !== "idle") return;
 
-    this.isAttacking = true;
-    this.attackCooldown = 20;
-
-    setTimeout(() => {
-      this.isAttacking = false;
-    }, 100);
+    this.attackState = "startup";
+    this.attackTimer = this.attackData.startup;
+    this.hasHit = false;
   }
 
   takeHit(damage, direction) {
     this.health -= damage;
-
-    // knockback
     this.x += 25 * direction;
-
-    // hitstun
     this.hitstun = 12;
   }
 
   update(canvas) {
-    // cooldown ticking
+    // cooldowns
     if (this.attackCooldown > 0) this.attackCooldown--;
-    if (this.hitstun > 0) this.hitstun--;
-
-    // ❌ freeze movement during hitstun
-    if (this.hitstun > 0) return;
-
-    // LEFT / RIGHT
-    if (keys[this.controls.left]) this.x -= this.speed;
-    if (keys[this.controls.right]) this.x += this.speed;
-
-    // JUMP
-    if (keys[this.controls.jump] && this.isGrounded) {
-      this.velocityY = -12;
-      this.isGrounded = false;
+    if (this.hitstun > 0) {
+      this.hitstun--;
+      return;
     }
 
-    // gravity
+    // 🥊 ATTACK STATE MACHINE
+    if (this.attackState !== "idle") {
+      this.attackTimer--;
+
+      // STARTUP → ACTIVE
+      if (this.attackState === "startup" && this.attackTimer <= 0) {
+        this.attackState = "active";
+        this.attackTimer = this.attackData.active;
+        this.isAttacking = true;
+      }
+
+      // ACTIVE → RECOVERY
+      else if (this.attackState === "active" && this.attackTimer <= 0) {
+        this.attackState = "recovery";
+        this.attackTimer = this.attackData.recovery;
+        this.isAttacking = false;
+      }
+
+      // RECOVERY → IDLE
+      else if (this.attackState === "recovery" && this.attackTimer <= 0) {
+        this.attackState = "idle";
+        this.attackCooldown = 10;
+      }
+    }
+
+    // movement disabled during attack/recovery (classic fighting game feel)
+    const canMove = this.attackState === "idle";
+
+    if (canMove) {
+      if (keys[this.controls.left]) this.x -= this.speed;
+      if (keys[this.controls.right]) this.x += this.speed;
+
+      if (keys[this.controls.jump] && this.isGrounded) {
+        this.velocityY = -12;
+        this.isGrounded = false;
+      }
+    }
+
+    // gravity always runs
     this.y += this.velocityY;
     this.velocityY += this.gravity;
 
-    // floor collision
     if (this.y + this.height >= canvas.height) {
       this.y = canvas.height - this.height;
       this.velocityY = 0;
@@ -78,5 +112,10 @@ export class Fighter {
   draw(ctx) {
     ctx.fillStyle = this.color;
     ctx.fillRect(this.x, this.y, this.width, this.height);
+
+    // 🧠 DEBUG: show attack state
+    ctx.fillStyle = "white";
+    ctx.font = "12px Arial";
+    ctx.fillText(this.attackState, this.x, this.y - 10);
   }
 }
