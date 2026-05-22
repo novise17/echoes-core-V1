@@ -18,16 +18,15 @@ export class Fighter {
     this.gravity = 0.7;
     this.isGrounded = false;
 
-    // 🥊 ATTACK SYSTEM (NEW)
-    this.attackState = "idle"; // idle | startup | active | recovery
+    // ATTACK SYSTEM
+    this.attackState = "idle";
     this.attackTimer = 0;
-    this.hasHit = false;
-
     this.isAttacking = false;
     this.attackCooldown = 0;
     this.hitstun = 0;
 
-    // ⚙️ FRAME DATA (you can tweak later)
+    this.hasHit = false;
+
     this.attackData = {
       startup: 10,
       active: 6,
@@ -37,6 +36,9 @@ export class Fighter {
     };
   }
 
+  // =========================
+  // ATTACK
+  // =========================
   attack() {
     if (this.attackCooldown > 0 || this.hitstun > 0) return;
     if (this.attackState !== "idle") return;
@@ -46,21 +48,61 @@ export class Fighter {
     this.hasHit = false;
   }
 
-  takeHit(damage, direction) {
-    this.health -= damage;
-    this.x += 25 * direction;
-    this.hitstun = 12;
+  // =========================
+  // 🛡️ BLOCK SYSTEM (NEW)
+  // =========================
+  isBlocking(opponent) {
+    // opponent is to the right → holding LEFT = block
+    if (opponent.x > this.x) {
+      return keys[this.controls.left];
+    }
+
+    // opponent is to the left → holding RIGHT = block
+    if (opponent.x < this.x) {
+      return keys[this.controls.right];
+    }
+
+    return false;
   }
 
+  // =========================
+  // TAKE HIT (UPDATED)
+  // =========================
+  takeHit(damage, direction, attacker) {
+    // 🛡️ BLOCK CHECK
+    if (this.isBlocking(attacker)) {
+      this.health -= damage * 0.2; // chip damage
+
+      this.x += direction * 2; // tiny pushback
+
+      this.hitstun = 5; // small reaction, not full combo stop
+
+      this.isAttacking = false;
+      return;
+    }
+
+    // 💥 NORMAL HIT
+    this.health -= damage;
+
+    this.x += direction * 25;
+
+    this.hitstun = 12;
+    this.isAttacking = false;
+  }
+
+  // =========================
+  // UPDATE
+  // =========================
   update(canvas) {
     // cooldowns
     if (this.attackCooldown > 0) this.attackCooldown--;
+
     if (this.hitstun > 0) {
       this.hitstun--;
       return;
     }
 
-    // 🥊 ATTACK STATE MACHINE
+    // ATTACK STATE MACHINE
     if (this.attackState !== "idle") {
       this.attackTimer--;
 
@@ -85,7 +127,7 @@ export class Fighter {
       }
     }
 
-    // movement disabled during attack/recovery (classic fighting game feel)
+    // MOVEMENT ONLY WHEN NOT ATTACKING
     const canMove = this.attackState === "idle";
 
     if (canMove) {
@@ -98,7 +140,7 @@ export class Fighter {
       }
     }
 
-    // gravity always runs
+    // GRAVITY
     this.y += this.velocityY;
     this.velocityY += this.gravity;
 
@@ -109,11 +151,13 @@ export class Fighter {
     }
   }
 
+  // =========================
+  // DRAW
+  // =========================
   draw(ctx) {
     ctx.fillStyle = this.color;
     ctx.fillRect(this.x, this.y, this.width, this.height);
 
-    // 🧠 DEBUG: show attack state
     ctx.fillStyle = "white";
     ctx.font = "12px Arial";
     ctx.fillText(this.attackState, this.x, this.y - 10);
