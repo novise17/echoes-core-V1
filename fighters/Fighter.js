@@ -12,7 +12,7 @@ export class Fighter {
 
     this.speed = 5;
 
-    // ❤️ HEALTH (FIXED KO SYSTEM)
+    // ❤️ HEALTH + KO
     this.maxHealth = 100;
     this.health = 100;
     this.isKO = false;
@@ -69,12 +69,12 @@ export class Fighter {
       return;
     }
 
-    // 💥 NORMAL HIT
+    // 💥 HIT
     this.health -= damage;
     this.x += direction * 25;
     this.hitstun = 12;
 
-    // KO CHECK (IMPORTANT FIX)
+    // KO CHECK
     if (this.health <= 0) {
       this.health = 0;
       this.isKO = true;
@@ -101,14 +101,12 @@ export class Fighter {
         this.attackState = "active";
         this.attackTimer = this.attackData.active;
         this.isAttacking = true;
-      }
-
+      } 
       else if (this.attackState === "active" && this.attackTimer <= 0) {
         this.attackState = "recovery";
         this.attackTimer = this.attackData.recovery;
         this.isAttacking = false;
-      }
-
+      } 
       else if (this.attackState === "recovery" && this.attackTimer <= 0) {
         this.attackState = "idle";
         this.attackCooldown = 10;
@@ -145,7 +143,12 @@ export class Fighter {
 
     // health bar
     ctx.fillStyle = "red";
-    ctx.fillRect(this.x, this.y - 10, this.width * (this.health / this.maxHealth), 5);
+    ctx.fillRect(
+      this.x,
+      this.y - 10,
+      this.width * (this.health / this.maxHealth),
+      5
+    );
 
     ctx.fillStyle = "white";
     ctx.font = "12px Arial";
