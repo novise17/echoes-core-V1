@@ -143,29 +143,64 @@ export class Fighter {
     this.frameTick++;
   }
 
-  draw(ctx) {
-    const sprite =
-      this.attackState === "active"
-        ? this.sprites.attack
-        : this.sprites.idle;
+ draw(ctx) {
+  const sprite =
+    this.attackState === "active"
+      ? this.sprites.attack
+      : this.sprites.idle;
 
-    ctx.save();
+  ctx.save();
 
-    if (this.facing === -1) {
-      ctx.translate(this.x + this.width, this.y);
-      ctx.scale(-1, 1);
-    } else {
-      ctx.translate(this.x, this.y);
-    }
+  if (this.facing === -1) {
+    ctx.translate(this.x + this.width, this.y);
+    ctx.scale(-1, 1);
+  } else {
+    ctx.translate(this.x, this.y);
+  }
 
-    if (sprite.complete && sprite.naturalWidth > 0) {
-      ctx.drawImage(sprite, 0, 0, this.width, this.height);
-    } else {
-      ctx.fillStyle = this.color;
-      ctx.fillRect(0, 0, this.width, this.height);
-    }
+  // draw sprite OR fallback
+  if (sprite.complete && sprite.naturalWidth > 0) {
+    ctx.drawImage(sprite, 0, 0, this.width, this.height);
+  } else {
+    ctx.fillStyle = this.color;
+    ctx.fillRect(0, 0, this.width, this.height);
+  }
 
-    ctx.restore();
+  // =========================
+  // 👁️ FACE (ALWAYS ON TOP)
+  // =========================
+  ctx.fillStyle = "white";
+  ctx.fillRect(12, 25, 6, 6);
+  ctx.fillRect(this.width - 18, 25, 6, 6);
+
+  ctx.fillStyle = "black";
+  ctx.fillRect(14, 27, 2, 2);
+  ctx.fillRect(this.width - 16, 27, 2, 2);
+
+  // mouth (smash-style expression)
+  ctx.fillStyle = this.attackState === "active" ? "red" : "black";
+  ctx.fillRect(18, 55, 14, 3);
+
+  ctx.restore();
+
+  // health bar
+  ctx.fillStyle = "red";
+  ctx.fillRect(
+    this.x,
+    this.y - 10,
+    this.width * (this.health / this.maxHealth),
+    5
+  );
+
+  // debug
+  ctx.fillStyle = "white";
+  ctx.font = "12px Arial";
+  ctx.fillText(this.attackState, this.x, this.y - 20);
+
+  if (this.isKO) {
+    ctx.fillText("KO", this.x, this.y - 35);
+  }
+}
 
     // health bar
     ctx.fillStyle = "red";
