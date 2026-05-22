@@ -1,6 +1,7 @@
 import { Fighter } from "./fighters/Fighter.js";
 import { initInput } from "./engine/input.js";
 import { keys } from "./engine/input.js";
+import { startGameLoop } from "./engine/gameLoop.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -8,37 +9,42 @@ const ctx = canvas.getContext("2d");
 canvas.width = 1000;
 canvas.height = 600;
 
-// fighters
-const player1 = new Fighter(100, 300, "red", {
-  left: "a",
-  right: "d",
-  jump: "w"
-});
+// =============================== //
+// STATE (NOW INCLUDES HITSTOP)
+// =============================== //
+export const state = {
+  player1: new Fighter(100, 300, "red", {
+    left: "a",
+    right: "d",
+    jump: "w"
+  }),
 
-const player2 = new Fighter(700, 300, "blue", {
-  left: "ArrowLeft",
-  right: "ArrowRight",
-  jump: "ArrowUp"
-});
+  player2: new Fighter(700, 300, "blue", {
+    left: "ArrowLeft",
+    right: "ArrowRight",
+    jump: "ArrowUp"
+  }),
+
+  hitstop: 0
+};
 
 initInput();
 
 
 // =============================== //
-// 🔥 ATTACK INPUT LOCK (STEP 3.5)
+// ATTACK INPUT (STEP 3.5)
 // =============================== //
 let p1AttackPressed = false;
 let p2AttackPressed = false;
 
-// Player 1 attack (J)
 window.addEventListener("keydown", (e) => {
   if (e.key === "j" && !p1AttackPressed) {
-    player1.attack();
+    state.player1.attack();
     p1AttackPressed = true;
   }
 
   if (e.key === "Enter" && !p2AttackPressed) {
-    player2.attack();
+    state.player2.attack();
     p2AttackPressed = true;
   }
 });
@@ -50,7 +56,7 @@ window.addEventListener("keyup", (e) => {
 
 
 // =============================== //
-// 🧠 HIT DETECTION (unchanged logic)
+// HIT DETECTION + HITSTOP
 // =============================== //
 function checkHit(attacker, defender) {
   if (!attacker.isAttacking) return;
@@ -79,33 +85,15 @@ function checkHit(attacker, defender) {
     const direction = attacker.x < defender.x ? 1 : -1;
     defender.takeHit(10, direction);
 
-    // prevent multi-hit spam
+    // 💥 HITSTOP (NEW)
+    state.hitstop = 6;
+
     attacker.isAttacking = false;
   }
 }
 
 
 // =============================== //
-// 🎮 GAME LOOP
+// START GAME LOOP
 // =============================== //
-function gameLoop() {
-  // update fighters (now includes attack states)
-  player1.update(canvas);
-  player2.update(canvas);
-
-  // hit detection
-  checkHit(player1, player2);
-  checkHit(player2, player1);
-
-  // background
-  ctx.fillStyle = "#111";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // draw fighters
-  player1.draw(ctx);
-  player2.draw(ctx);
-
-  requestAnimationFrame(gameLoop);
-}
-
-gameLoop();
+startGameLoop(canvas, ctx, state, checkHit);
