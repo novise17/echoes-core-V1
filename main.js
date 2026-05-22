@@ -1,6 +1,5 @@
 import { Fighter } from "./fighters/Fighter.js";
 import { initInput } from "./engine/input.js";
-import { keys } from "./engine/input.js";
 import { startGameLoop } from "./engine/gameLoop.js";
 
 const canvas = document.getElementById("gameCanvas");
@@ -10,7 +9,7 @@ canvas.width = 1000;
 canvas.height = 600;
 
 // =============================== //
-// STATE (NOW INCLUDES HITSTOP)
+// GAME STATE
 // =============================== //
 export const state = {
   player1: new Fighter(100, 300, "red", {
@@ -25,14 +24,14 @@ export const state = {
     jump: "ArrowUp"
   }),
 
-  hitstop: 0
+  hitstop: 0,
+  matchOver: false
 };
 
 initInput();
 
-
 // =============================== //
-// ATTACK INPUT (STEP 3.5)
+// ATTACK INPUT (cleaned)
 // =============================== //
 let p1AttackPressed = false;
 let p2AttackPressed = false;
@@ -54,12 +53,11 @@ window.addEventListener("keyup", (e) => {
   if (e.key === "Enter") p2AttackPressed = false;
 });
 
-
 // =============================== //
 // HIT DETECTION + HITSTOP
 // =============================== //
 function checkHit(attacker, defender) {
-  if (!attacker.isAttacking) return;
+  if (!attacker.isAttacking || defender.isKO) return;
 
   const attackBox = {
     x: attacker.x + (attacker.x < defender.x ? attacker.width : -60),
@@ -83,17 +81,17 @@ function checkHit(attacker, defender) {
 
   if (hit) {
     const direction = attacker.x < defender.x ? 1 : -1;
+
     defender.takeHit(10, direction, attacker);
 
-    // 💥 HITSTOP (NEW)
+    // hitstop
     state.hitstop = 6;
 
     attacker.isAttacking = false;
   }
 }
 
-
 // =============================== //
-// START GAME LOOP
+// START GAME
 // =============================== //
 startGameLoop(canvas, ctx, state, checkHit);
