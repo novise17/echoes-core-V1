@@ -5,26 +5,29 @@ export class Fighter {
     this.x = x;
     this.y = y;
     this.color = color;
-
     this.controls = controls;
 
     this.width = 50;
     this.height = 100;
 
     this.speed = 5;
-    this.health = 100;
 
+    // ❤️ HEALTH (FIXED KO SYSTEM)
+    this.maxHealth = 100;
+    this.health = 100;
+    this.isKO = false;
+
+    // physics
     this.velocityY = 0;
     this.gravity = 0.7;
     this.isGrounded = false;
 
-    // ATTACK SYSTEM
+    // attack system
     this.attackState = "idle";
     this.attackTimer = 0;
     this.isAttacking = false;
     this.attackCooldown = 0;
     this.hitstun = 0;
-
     this.hasHit = false;
 
     this.attackData = {
@@ -36,10 +39,8 @@ export class Fighter {
     };
   }
 
-  // =========================
-  // ATTACK
-  // =========================
   attack() {
+    if (this.isKO) return;
     if (this.attackCooldown > 0 || this.hitstun > 0) return;
     if (this.attackState !== "idle") return;
 
@@ -48,53 +49,43 @@ export class Fighter {
     this.hasHit = false;
   }
 
-  // =========================
-  // 🛡️ BLOCK SYSTEM (NEW)
-  // =========================
   isBlocking(opponent) {
-    // opponent is to the right → holding LEFT = block
-    if (opponent.x > this.x) {
-      return keys[this.controls.left];
-    }
+    if (this.isKO) return false;
 
-    // opponent is to the left → holding RIGHT = block
-    if (opponent.x < this.x) {
-      return keys[this.controls.right];
-    }
+    if (opponent.x > this.x) return keys[this.controls.left];
+    if (opponent.x < this.x) return keys[this.controls.right];
 
     return false;
   }
 
-  // =========================
-  // TAKE HIT (UPDATED)
-  // =========================
   takeHit(damage, direction, attacker) {
-    // 🛡️ BLOCK CHECK
+    if (this.isKO) return;
+
+    // 🛡 BLOCK
     if (this.isBlocking(attacker)) {
-      this.health -= damage * 0.2; // chip damage
-
-      this.x += direction * 2; // tiny pushback
-
-      this.hitstun = 5; // small reaction, not full combo stop
-
-      this.isAttacking = false;
+      this.health -= damage * 0.2;
+      this.x += direction * 2;
+      this.hitstun = 5;
       return;
     }
 
     // 💥 NORMAL HIT
     this.health -= damage;
-
     this.x += direction * 25;
-
     this.hitstun = 12;
-    this.isAttacking = false;
+
+    // KO CHECK (IMPORTANT FIX)
+    if (this.health <= 0) {
+      this.health = 0;
+      this.isKO = true;
+      this.attackState = "idle";
+      this.isAttacking = false;
+    }
   }
 
-  // =========================
-  // UPDATE
-  // =========================
   update(canvas) {
-    // cooldowns
+    if (this.isKO) return;
+
     if (this.attackCooldown > 0) this.attackCooldown--;
 
     if (this.hitstun > 0) {
@@ -102,32 +93,29 @@ export class Fighter {
       return;
     }
 
-    // ATTACK STATE MACHINE
+    // attack state machine
     if (this.attackState !== "idle") {
       this.attackTimer--;
 
-      // STARTUP → ACTIVE
       if (this.attackState === "startup" && this.attackTimer <= 0) {
         this.attackState = "active";
         this.attackTimer = this.attackData.active;
         this.isAttacking = true;
       }
 
-      // ACTIVE → RECOVERY
       else if (this.attackState === "active" && this.attackTimer <= 0) {
         this.attackState = "recovery";
         this.attackTimer = this.attackData.recovery;
         this.isAttacking = false;
       }
 
-      // RECOVERY → IDLE
       else if (this.attackState === "recovery" && this.attackTimer <= 0) {
         this.attackState = "idle";
         this.attackCooldown = 10;
       }
     }
 
-    // MOVEMENT ONLY WHEN NOT ATTACKING
+    // movement
     const canMove = this.attackState === "idle";
 
     if (canMove) {
@@ -140,7 +128,7 @@ export class Fighter {
       }
     }
 
-    // GRAVITY
+    // gravity
     this.y += this.velocityY;
     this.velocityY += this.gravity;
 
@@ -151,15 +139,20 @@ export class Fighter {
     }
   }
 
-  // =========================
-  // DRAW
-  // =========================
   draw(ctx) {
     ctx.fillStyle = this.color;
     ctx.fillRect(this.x, this.y, this.width, this.height);
 
+    // health bar
+    ctx.fillStyle = "red";
+    ctx.fillRect(this.x, this.y - 10, this.width * (this.health / this.maxHealth), 5);
+
     ctx.fillStyle = "white";
     ctx.font = "12px Arial";
-    ctx.fillText(this.attackState, this.x, this.y - 10);
+    ctx.fillText(this.attackState, this.x, this.y - 20);
+
+    if (this.isKO) {
+      ctx.fillText("KO", this.x, this.y - 35);
+    }
   }
 }
