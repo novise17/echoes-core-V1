@@ -83,7 +83,7 @@ function checkHit(attacker, defender) {
 
   if (hit) {
     const direction = attacker.x < defender.x ? 1 : -1;
-    defender.takeHit(10, direction);
+    defender.takeHit(10, direction, attacker);
 
     // 💥 HITSTOP (NEW)
     state.hitstop = 6;
