@@ -1,18 +1,41 @@
-export function startGameLoop(canvas, ctx, state) {
+export function startGameLoop(canvas, ctx, state, checkHit) {
   function loop() {
-    update(state, canvas);
+    // =============================== //
+    // 🧊 HITSTOP CHECK
+    // =============================== //
+    if (state.hitstop > 0) {
+      state.hitstop--;
+
+      draw(ctx, state);
+      requestAnimationFrame(loop);
+      return;
+    }
+
+    update(state, canvas, checkHit);
     draw(ctx, state);
+
     requestAnimationFrame(loop);
   }
 
   loop();
 }
 
-function update(state, canvas) {
+
+// =============================== //
+// UPDATE LOGIC
+// =============================== //
+function update(state, canvas, checkHit) {
   state.player1.update(canvas, state.player2);
   state.player2.update(canvas, state.player1);
+
+  checkHit(state.player1, state.player2);
+  checkHit(state.player2, state.player1);
 }
 
+
+// =============================== //
+// DRAW
+// =============================== //
 function draw(ctx, state) {
   ctx.fillStyle = "#111";
   ctx.fillRect(0, 0, 1000, 600);
