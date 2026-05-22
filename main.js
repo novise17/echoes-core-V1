@@ -23,10 +23,38 @@ const player2 = new Fighter(700, 300, "blue", {
 
 initInput();
 
+
+// =============================== //
+// 🔥 ATTACK INPUT LOCK (STEP 3.5)
+// =============================== //
+let p1AttackPressed = false;
+let p2AttackPressed = false;
+
+// Player 1 attack (J)
+window.addEventListener("keydown", (e) => {
+  if (e.key === "j" && !p1AttackPressed) {
+    player1.attack();
+    p1AttackPressed = true;
+  }
+
+  if (e.key === "Enter" && !p2AttackPressed) {
+    player2.attack();
+    p2AttackPressed = true;
+  }
+});
+
+window.addEventListener("keyup", (e) => {
+  if (e.key === "j") p1AttackPressed = false;
+  if (e.key === "Enter") p2AttackPressed = false;
+});
+
+
+// =============================== //
+// 🧠 HIT DETECTION (unchanged logic)
+// =============================== //
 function checkHit(attacker, defender) {
   if (!attacker.isAttacking) return;
 
-  // 🥊 ATTACK HITBOX (in front of attacker)
   const attackBox = {
     x: attacker.x + (attacker.x < defender.x ? attacker.width : -60),
     y: attacker.y + 20,
@@ -34,7 +62,6 @@ function checkHit(attacker, defender) {
     height: 40
   };
 
-  // 🧍 DEFENDER HITBOX
   const hurtBox = {
     x: defender.x,
     y: defender.y,
@@ -42,7 +69,6 @@ function checkHit(attacker, defender) {
     height: defender.height
   };
 
-  // 🔥 collision check (AABB)
   const hit =
     attackBox.x < hurtBox.x + hurtBox.width &&
     attackBox.x + attackBox.width > hurtBox.x &&
@@ -53,23 +79,23 @@ function checkHit(attacker, defender) {
     const direction = attacker.x < defender.x ? 1 : -1;
     defender.takeHit(10, direction);
 
-    // stop infinite multi-hit spam
+    // prevent multi-hit spam
     attacker.isAttacking = false;
   }
 }
 
+
+// =============================== //
+// 🎮 GAME LOOP
+// =============================== //
 function gameLoop() {
-  // 🥊 attacks
-  if (keys["j"]) player1.attack();
-  if (keys["Enter"]) player2.attack();
-
-  // 🧠 hit detection (REAL HITBOX SYSTEM)
-  checkHit(player1, player2);
-  checkHit(player2, player1);
-
-  // update
+  // update fighters (now includes attack states)
   player1.update(canvas);
   player2.update(canvas);
+
+  // hit detection
+  checkHit(player1, player2);
+  checkHit(player2, player1);
 
   // background
   ctx.fillStyle = "#111";
