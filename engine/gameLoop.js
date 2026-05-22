@@ -2,7 +2,7 @@ export function startGameLoop(canvas, ctx, state, checkHit) {
 
   function loop() {
 
-    // 🧊 HITSTOP
+    // 🧊 HITSTOP (freezes gameplay but still draws)
     if (state.hitstop > 0) {
       state.hitstop--;
 
