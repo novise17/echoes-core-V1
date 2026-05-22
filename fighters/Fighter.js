@@ -29,24 +29,28 @@ export class Fighter {
     this.attackCooldown = 0;
     this.hitstun = 0;
 
-    this.facing = 1; // 1 = right, -1 = left
+    this.facing = 1;
 
-    // ===== SPRITES =====
+    // ======================
+    // SPRITES (FIXED PATHS)
+    // ======================
+    const prefix = color; // "red" or "blue"
+
     this.sprites = {
       idle: new Image(),
-      run: new Image(),
       attack: new Image()
     };
 
-    // assign sprite paths based on color
-    this.sprites.idle.src = `assets/${color}/idle.png`;
-    this.sprites.run.src = `assets/${color}/run.png`;
-    this.sprites.attack.src = `assets/${color}/attack.png`;
+    this.sprites.idle.src = `assets/${prefix}_idle.png`;
+    this.sprites.attack.src = `assets/${prefix}_attack.png`;
 
-    this.currentFrame = 0;
+    // animation helper (future expansion)
     this.frameTick = 0;
   }
 
+  // ======================
+  // ATTACK
+  // ======================
   attack() {
     if (this.isKO) return;
     if (this.attackCooldown > 0 || this.hitstun > 0) return;
@@ -56,6 +60,9 @@ export class Fighter {
     this.attackTimer = 10;
   }
 
+  // ======================
+  // BLOCK
+  // ======================
   isBlocking(opponent) {
     if (this.isKO) return false;
 
@@ -65,6 +72,9 @@ export class Fighter {
     return false;
   }
 
+  // ======================
+  // TAKE HIT
+  // ======================
   takeHit(damage, direction, attacker) {
     if (this.isKO) return;
 
@@ -82,9 +92,14 @@ export class Fighter {
     if (this.health <= 0) {
       this.health = 0;
       this.isKO = true;
+      this.attackState = "idle";
+      this.isAttacking = false;
     }
   }
 
+  // ======================
+  // UPDATE
+  // ======================
   update(canvas) {
     if (this.isKO) return;
 
@@ -95,7 +110,7 @@ export class Fighter {
       return;
     }
 
-    // direction tracking
+    // facing direction
     if (keys[this.controls.left]) this.facing = -1;
     if (keys[this.controls.right]) this.facing = 1;
 
@@ -141,25 +156,22 @@ export class Fighter {
       this.isGrounded = true;
     }
 
-    // animation tick
+    // simple animation tick (ready for sprite sheets later)
     this.frameTick++;
-    if (this.frameTick > 10) {
-      this.currentFrame++;
-      this.frameTick = 0;
-    }
   }
 
+  // ======================
+  // DRAW (SPRITES)
+  // ======================
   draw(ctx) {
     const sprite =
       this.attackState === "active"
         ? this.sprites.attack
-        : this.attackState === "idle"
-        ? this.sprites.idle
-        : this.sprites.run;
+        : this.sprites.idle;
 
-    // flip sprite based on direction
     ctx.save();
 
+    // flip character
     if (this.facing === -1) {
       ctx.translate(this.x + this.width, this.y);
       ctx.scale(-1, 1);
@@ -167,8 +179,8 @@ export class Fighter {
       ctx.translate(this.x, this.y);
     }
 
-    // draw sprite (fallback if not loaded)
-    if (sprite.complete) {
+    // draw sprite OR fallback rectangle
+    if (sprite.complete && sprite.naturalWidth > 0) {
       ctx.drawImage(sprite, 0, 0, this.width, this.height);
     } else {
       ctx.fillStyle = this.color;
@@ -179,9 +191,14 @@ export class Fighter {
 
     // health bar
     ctx.fillStyle = "red";
-    ctx.fillRect(this.x, this.y - 10, this.width * (this.health / this.maxHealth), 5);
+    ctx.fillRect(
+      this.x,
+      this.y - 10,
+      this.width * (this.health / this.maxHealth),
+      5
+    );
 
-    // debug state
+    // debug text
     ctx.fillStyle = "white";
     ctx.font = "12px Arial";
     ctx.fillText(this.attackState, this.x, this.y - 20);
