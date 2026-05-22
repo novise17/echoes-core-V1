@@ -26,14 +26,35 @@ initInput();
 function checkHit(attacker, defender) {
   if (!attacker.isAttacking) return;
 
-  const range = 60;
+  // 🥊 ATTACK HITBOX (in front of attacker)
+  const attackBox = {
+    x: attacker.x + (attacker.x < defender.x ? attacker.width : -60),
+    y: attacker.y + 20,
+    width: 60,
+    height: 40
+  };
 
-  const inXRange = Math.abs(attacker.x - defender.x) < range;
-  const inYRange = Math.abs(attacker.y - defender.y) < 50;
+  // 🧍 DEFENDER HITBOX
+  const hurtBox = {
+    x: defender.x,
+    y: defender.y,
+    width: defender.width,
+    height: defender.height
+  };
 
-  if (inXRange && inYRange) {
+  // 🔥 collision check (AABB)
+  const hit =
+    attackBox.x < hurtBox.x + hurtBox.width &&
+    attackBox.x + attackBox.width > hurtBox.x &&
+    attackBox.y < hurtBox.y + hurtBox.height &&
+    attackBox.y + attackBox.height > hurtBox.y;
+
+  if (hit) {
     const direction = attacker.x < defender.x ? 1 : -1;
     defender.takeHit(10, direction);
+
+    // stop infinite multi-hit spam
+    attacker.isAttacking = false;
   }
 }
 
@@ -42,7 +63,7 @@ function gameLoop() {
   if (keys["j"]) player1.attack();
   if (keys["Enter"]) player2.attack();
 
-  // 🧠 hit detection
+  // 🧠 hit detection (REAL HITBOX SYSTEM)
   checkHit(player1, player2);
   checkHit(player2, player1);
 
@@ -54,7 +75,7 @@ function gameLoop() {
   ctx.fillStyle = "#111";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // draw
+  // draw fighters
   player1.draw(ctx);
   player2.draw(ctx);
 
