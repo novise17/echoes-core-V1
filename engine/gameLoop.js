@@ -1,8 +1,8 @@
 export function startGameLoop(canvas, ctx, state, checkHit) {
+
   function loop() {
-    // =============================== //
-    // 🧊 HITSTOP CHECK
-    // =============================== //
+
+    // 🧊 HITSTOP
     if (state.hitstop > 0) {
       state.hitstop--;
 
@@ -20,10 +20,9 @@ export function startGameLoop(canvas, ctx, state, checkHit) {
   loop();
 }
 
-
-// =============================== //
-// UPDATE LOGIC
-// =============================== //
+// =========================
+// UPDATE
+// =========================
 function update(state, canvas, checkHit) {
   state.player1.update(canvas, state.player2);
   state.player2.update(canvas, state.player1);
@@ -32,10 +31,9 @@ function update(state, canvas, checkHit) {
   checkHit(state.player2, state.player1);
 }
 
-
-// =============================== //
+// =========================
 // DRAW
-// =============================== //
+// =========================
 function draw(ctx, state) {
   ctx.fillStyle = "#111";
   ctx.fillRect(0, 0, 1000, 600);
