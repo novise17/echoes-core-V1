@@ -17,9 +17,42 @@ export class Fighter {
     this.velocityY = 0;
     this.gravity = 0.7;
     this.isGrounded = false;
+
+    // 🥊 combat
+    this.isAttacking = false;
+    this.attackCooldown = 0;
+    this.hitstun = 0;
+  }
+
+  attack() {
+    if (this.attackCooldown > 0 || this.hitstun > 0) return;
+
+    this.isAttacking = true;
+    this.attackCooldown = 20;
+
+    setTimeout(() => {
+      this.isAttacking = false;
+    }, 100);
+  }
+
+  takeHit(damage, direction) {
+    this.health -= damage;
+
+    // knockback
+    this.x += 25 * direction;
+
+    // hitstun
+    this.hitstun = 12;
   }
 
   update(canvas) {
+    // cooldown ticking
+    if (this.attackCooldown > 0) this.attackCooldown--;
+    if (this.hitstun > 0) this.hitstun--;
+
+    // ❌ freeze movement during hitstun
+    if (this.hitstun > 0) return;
+
     // LEFT / RIGHT
     if (keys[this.controls.left]) this.x -= this.speed;
     if (keys[this.controls.right]) this.x += this.speed;
