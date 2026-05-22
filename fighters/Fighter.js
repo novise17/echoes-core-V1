@@ -1,10 +1,12 @@
 import { keys } from "../engine/input.js";
 
 export class Fighter {
-  constructor(x, y, color) {
+  constructor(x, y, color, controls) {
     this.x = x;
     this.y = y;
     this.color = color;
+
+    this.controls = controls;
 
     this.width = 50;
     this.height = 100;
@@ -17,12 +19,13 @@ export class Fighter {
     this.isGrounded = false;
   }
 
-  update(canvas, enemy) {
-    // movement
-    if (keys["a"]) this.x -= this.speed;
-    if (keys["d"]) this.x += this.speed;
+  update(canvas) {
+    // LEFT / RIGHT
+    if (keys[this.controls.left]) this.x -= this.speed;
+    if (keys[this.controls.right]) this.x += this.speed;
 
-    if (keys["w"] && this.isGrounded) {
+    // JUMP
+    if (keys[this.controls.jump] && this.isGrounded) {
       this.velocityY = -12;
       this.isGrounded = false;
     }
@@ -31,6 +34,7 @@ export class Fighter {
     this.y += this.velocityY;
     this.velocityY += this.gravity;
 
+    // floor collision
     if (this.y + this.height >= canvas.height) {
       this.y = canvas.height - this.height;
       this.velocityY = 0;
